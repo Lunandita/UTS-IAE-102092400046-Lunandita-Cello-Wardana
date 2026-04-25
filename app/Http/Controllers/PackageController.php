@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Midtrans\Config;
 use Midtrans\Snap;
+use App\Models\Pembayaran;
 
 class PackageController extends Controller
 {
@@ -49,17 +50,13 @@ class PackageController extends Controller
 
     public function index()
     {
-        $packages = $this->packages;
-        return view('packages.index', compact('packages'));
+        return view('packages.index', ['packages' => $this->packages]);
     }
 
     public function show($id)
     {
         $package = collect($this->packages)->firstWhere('id', (int) $id);
-
-        if (!$package) {
-            abort(404);
-        }
+        if (!$package) abort(404);
 
         return view('packages.show', compact('package'));
     }
@@ -67,10 +64,7 @@ class PackageController extends Controller
     public function checkout($id)
     {
         $package = collect($this->packages)->firstWhere('id', (int) $id);
-
-        if (!$package) {
-            abort(404);
-        }
+        if (!$package) abort(404);
 
         return view('packages.checkout', compact('package'));
     }
@@ -78,10 +72,7 @@ class PackageController extends Controller
     public function process(Request $request, $id)
     {
         $package = collect($this->packages)->firstWhere('id', (int) $id);
-
-        if (!$package) {
-            abort(404);
-        }
+        if (!$package) abort(404);
 
         $request->validate([
             'name' => 'required|string|max:100',
@@ -89,6 +80,15 @@ class PackageController extends Controller
             'phone' => 'required|string|max:20',
         ]);
 
+        // 🔥 SIMPAN KE DATABASE
+        Pembayaran::create([
+            'nama_pelanggan' => $request->name,
+            'jumlah' => $package['price'],
+            'metode' => 'midtrans',
+            'status' => 'pending'
+        ]);
+
+        // MIDTRANS
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = filter_var(env('MIDTRANS_IS_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN);
         Config::$isSanitized = true;

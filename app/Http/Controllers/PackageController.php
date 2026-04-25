@@ -80,7 +80,6 @@ class PackageController extends Controller
             'phone' => 'required|string|max:20',
         ]);
 
-        // 🔥 SIMPAN KE DATABASE
         Pembayaran::create([
             'nama_pelanggan' => $request->name,
             'jumlah' => $package['price'],
